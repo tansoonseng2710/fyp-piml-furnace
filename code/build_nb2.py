@@ -250,8 +250,8 @@ def train(split_col, w_pde, seed, cfg):
         loss = loss_d + w * loss_p
         opt.zero_grad(set_to_none=True); loss.backward(); opt.step(); sched.step()
         if it % cfg["log_every"] == 0 or it == cfg["steps"]:
-            hist.append((it, float(loss_d), float(loss_p)))
-            print(f"  [{split_col} | w_pde={w_pde} | seed {seed}] step {it:5d}  data loss {float(loss_d):.4f}  physics loss {float(loss_p):.4f}  ({time.time()-t0:.0f}s)")
+            hist.append((it, loss_d.item(), loss_p.item()))
+            print(f"  [{split_col} | w_pde={w_pde} | seed {seed}] step {it:5d}  data loss {loss_d.item():.4f}  physics loss {loss_p.item():.4f}  ({time.time()-t0:.0f}s)")
     return model, phys, hist
 
 MODELS = {}
