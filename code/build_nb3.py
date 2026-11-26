@@ -52,6 +52,9 @@ CFG = dict(
     width=128, depth=5, n_fourier=48, sigma=2.0,
     val_frac=0.10, log_every=500,
 )
+if DEVICE == "cpu" and not QUICK:  # no free GPU: a lighter run that still finishes in ~30 min on CPU
+    CFG.update(seeds=[0], steps=3000, warm=750, batch=8192)
+    print("CPU-lite run: 1 seed, 3000 steps, batch 8192 (GPU run uses 3 seeds, 6000 steps, batch 16384)")
 """)
 
 md(r"""
