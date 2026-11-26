@@ -351,6 +351,30 @@ print("saved results_tilt20.csv, improvement_tilt20.csv, points_tilt20.csv")
 """)
 
 md(r"""
+### Export: predicted maps of the +20° image (for slides)
+
+Mean prediction over the seeds of each model on a 0.5 m grid, printed as text (1 byte per cell, (T − 500 K) / 8; 0 = outside the furnace). The slides redraw these next to the CFD map.
+""")
+
+code(r"""
+import base64
+G = 0.5; NX, NY = int(np.ceil(X_MAX / G)), int(np.ceil(Y_MAX / G))
+gx = np.clip((TE.x_m.values // G).astype(int), 0, NX - 1); gy = np.clip((TE.y_m.values // G).astype(int), 0, NY - 1)
+cells = np.unique(np.c_[gx, gy], axis=0)
+cdf = pd.DataFrame({"x_m": (cells[:, 0] + 0.5) * G, "y_m": (cells[:, 1] + 0.5) * G, "tilt_deg": TEST_TILT})
+print("MAPEXPORT_BEGIN")
+print(f"grid {G} {NX} {NY} tilt {TEST_TILT} seeds {len(CFG['seeds'])}")
+for name in [mlp, pinn]:
+    p = np.mean([predict(MODELS[(name, s)][0], cdf) for s in CFG["seeds"]], axis=0)
+    a = np.zeros((NY, NX), np.uint8)
+    a[cells[:, 1], cells[:, 0]] = np.clip(np.round((p - 500) / 8), 1, 255).astype(np.uint8)
+    print("MAP", name.replace(" ", "_"), base64.b64encode(a.tobytes()).decode())
+print("TABLE"); print(IMPROVE.round(4).to_string())
+print("POINTS hybrid closer", int((PTS.closer == "hybrid").sum()), "of", len(PTS), "| mean point error data-only", round(PTS["data-only error (K)"].mean(), 1), "hybrid", round(PTS["hybrid error (K)"].mean(), 1))
+print("MAPEXPORT_END")
+""")
+
+md(r"""
 ## 6 · How to read the answer
 
 * **The key table is "hybrid PINN minus data-only MLP".** R² gain in points (for example 0.95 → 0.97 is +0.02) and the MAE reduction in %. Because the two models share the network, data, steps and seeds, the difference is caused by the physics loss.
